@@ -1,0 +1,79 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code related
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+ephemeral/
+
+# Android generated files & secrets
+android/.gradle/
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/app/src/main/assets/flutter_assets/
+key.properties
+*.jks
+*.keystore
+
+# iOS / macOS ephemeral & generated
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+ios/**/GeneratedPluginRegistrant.h
+ios/**/GeneratedPluginRegistrant.m
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Windows / Linux ephemeral
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# Symbol processing & Obfuscation related
+app.*.symbols
+app.*.map.json
+
+# Environment files containing secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# Firebase & Cloud Credentials
+*service-account*.json
+*adminsdk*.json
+*credentials*.json
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart

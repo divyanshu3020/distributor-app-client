@@ -1,0 +1,117 @@
+# ==============================================================================
+# SECRETS & ENVIRONMENT CONFIGURATIONS (NEVER COMMIT SENSITIVE SECRETS)
+# ==============================================================================
+# Block all .env files and extensions anywhere in the repo
+**/.env
+**/.env.*
+**/*.env
+.env
+.env.*
+*.env
+
+# Supabase backend secrets & local state
+supabase_backend/.temp/
+supabase_backend/.branches/
+supabase_backend/*.log
+
+# ALWAYS preserve template example files for developers
+!.env.example
+!**/.env.example
+
+# Private Keys, Certificates, Keystores & Credentials
+*.pem
+*.key
+*.pkcs12
+*.p12
+*.pfx
+*.asc
+*.cer
+*.crt
+*.jks
+*.keystore
+key.properties
+local.properties
+
+# Firebase & Cloud Service Accounts
+*service-account*.json
+*adminsdk*.json
+*credentials*.json
+client_secret*.json
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# Database dumps and live backups
+*.dump
+*.backup
+*.sql.gz
+
+# ==============================================================================
+# FLUTTER / DART BUILD ARTIFACTS & EPHEMERAL FILES
+# ==============================================================================
+**/doc/api/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/build/
+ephemeral/
+
+# Android build artifacts & local properties
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/app/src/main/assets/flutter_assets/
+
+# iOS / macOS ephemeral & generated artifacts
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/ios/**/GeneratedPluginRegistrant.h
+**/ios/**/GeneratedPluginRegistrant.m
+**/ios/.symlinks/
+**/ios/Pods/
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+
+# Desktop (Windows / Linux) ephemeral files
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
+
+# Symbol processing & obfuscation maps
+app.*.symbols
+app.*.map.json
+
+# ==============================================================================
+# SYSTEM & OS ARTIFACTS
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ==============================================================================
+# IDE & EDITOR FILES
+# ==============================================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.log
