@@ -1,0 +1,128 @@
+services:
+  # 1. PostgreSQL 15 with Supabase Auth, Extensions, and Schema
+  db:
+    image: supabase/postgres:15.1.1.78
+    container_name: bhagwati-db
+    restart: unless-stopped
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+    volumes:
+      - bhagwati_pgdata:/var/lib/postgresql/data
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bhagwati-net
+
+  # 2. PostgREST (Auto-generated REST API for Flutter client)
+  rest:
+    image: postgrest/postgrest:v12.0.2
+    container_name: bhagwati-rest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_SERVER_CORS_ALLOWED_ORIGINS: "*"
+    networks:
+      - bhagwati-net
+
+  # 3. Supabase GoTrue (Authentication server)
+  auth:
+    image: supabase/gotrue:v2.158.1
+    container_name: bhagwati-auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_DB_DRIVER: postgres
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:54321/auth/v1
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+    networks:
+      - bhagwati-net
+
+  # 4. Kong API Gateway (Single entrypoint for REST & Auth on port 54321)
+  kong:
+    image: kong:2.8.1-alpine
+    container_name: bhagwati-kong
+    restart: unless-stopped
+    ports:
+      - "54321:8000"
+    depends_on:
+      - rest
+      - auth
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: bundled,cors
+    volumes:
+      - ./docker/kong.yml:/var/lib/kong/kong.yml:ro
+    networks:
+      - bhagwati-net
+
+  # 5. Postgres Meta (Management API for Studio)
+  meta:
+    image: supabase/postgres-meta:v0.84.2
+    container_name: bhagwati-meta
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: postgres
+    networks:
+      - bhagwati-net
+
+  # 6. Supabase Studio (Web Admin Dashboard on port 54323)
+  studio:
+    image: supabase/studio:latest
+    container_name: bhagwati-studio
+    restart: unless-stopped
+    ports:
+      - "54323:3000"
+    depends_on:
+      - db
+      - meta
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: postgres
+      SUPABASE_REST_URL: http://localhost:54321/rest/v1
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoYWd3YXRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.SqA22j4Ou037Z6rkb3fyx4s6-WUltiM_rL2YVxjFYus
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoYWd3YXRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDAwMDAwMDAwfQ.C6x9Ed2F8ETlq1NTJ8dT6iLmxCU4EtV2_XLfsQGPqEA
+    networks:
+      - bhagwati-net
+
+volumes:
+  bhagwati_pgdata:
+
+networks:
+  bhagwati-net:
+    driver: bridge
