@@ -210,7 +210,7 @@ class CartScreen extends StatelessWidget {
                                 onTap: () => cartService.updatePackages(item.product.id, item.packages - 1),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
                                 child: Text(
                                   '${item.packages} pkgs',
                                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
@@ -222,20 +222,25 @@ class CartScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const ApproximateBadge(compact: true),
-                              const SizedBox(height: 2),
-                              Text(
-                                CurrencyFormatter.formatApprox(item.subtotalApprox),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryDark,
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const ApproximateBadge(compact: true),
+                                const SizedBox(height: 2),
+                                Text(
+                                  CurrencyFormatter.formatApprox(item.subtotalApprox),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.primaryDark,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -323,7 +328,10 @@ class CartScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Items Subtotal (Approx):', style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                      const Expanded(
+                        child: Text('Items Subtotal (Approx):', style: TextStyle(fontSize: 13, color: AppTheme.textMuted), overflow: TextOverflow.ellipsis),
+                      ),
+                      const SizedBox(width: 8),
                       Text(
                         CurrencyFormatter.formatApprox(cartService.subtotalApprox),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -334,10 +342,14 @@ class CartScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Delivery Freight (${vehicle.tierName}):',
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                      Expanded(
+                        child: Text(
+                          'Delivery Freight (${vehicle.tierName}):',
+                          style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         CurrencyFormatter.formatApprox(cartService.approxDeliveryFare),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
@@ -350,16 +362,19 @@ class CartScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Approximate Total:',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                          ),
-                          ApproximateBadge(compact: true),
-                        ],
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Approximate Total:',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            ),
+                            ApproximateBadge(compact: true),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         CurrencyFormatter.formatApprox(cartService.grandTotalApprox),
                         style: const TextStyle(

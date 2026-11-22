@@ -64,52 +64,69 @@ class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
         ],
       ),
       body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
-            activeIcon: Icon(Icons.storefront),
-            label: 'Catalog',
-          ),
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: cartService.itemCount > 0,
-              label: Text('${cartService.itemCount}'),
-              child: const Icon(Icons.shopping_cart_outlined),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF0C831F),
+          unselectedItemColor: const Color(0xFF64748B),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: [
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.storefront_outlined),
+              activeIcon: Icon(Icons.storefront),
+              label: 'Catalog',
             ),
-            activeIcon: Badge(
-              isLabelVisible: cartService.itemCount > 0,
-              label: Text('${cartService.itemCount}'),
-              child: const Icon(Icons.shopping_cart),
+            BottomNavigationBarItem(
+              icon: Badge(
+                isLabelVisible: cartService.itemCount > 0,
+                backgroundColor: const Color(0xFF0C831F),
+                label: Text('${cartService.itemCount}'),
+                child: const Icon(Icons.shopping_cart_outlined),
+              ),
+              activeIcon: Badge(
+                isLabelVisible: cartService.itemCount > 0,
+                backgroundColor: const Color(0xFF0C831F),
+                label: Text('${cartService.itemCount}'),
+                child: const Icon(Icons.shopping_cart),
+              ),
+              label: 'Cart',
             ),
-            label: 'Cart & Freight',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long),
-            label: 'Quotes & Orders',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.newspaper_outlined),
-            activeIcon: Icon(Icons.newspaper),
-            label: 'News',
-          ),
-          BottomNavigationBarItem(
-            icon: Badge(
-              isLabelVisible: notifService.unreadCount > 0,
-              label: Text('${notifService.unreadCount}'),
-              child: const Icon(Icons.notifications_outlined),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: 'Quotes',
             ),
-            activeIcon: Badge(
-              isLabelVisible: notifService.unreadCount > 0,
-              label: Text('${notifService.unreadCount}'),
-              child: const Icon(Icons.notifications),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.campaign_outlined),
+              activeIcon: Icon(Icons.campaign),
+              label: 'Updates',
             ),
-            label: 'Alerts',
-          ),
-        ],
+            BottomNavigationBarItem(
+              icon: Badge(
+                isLabelVisible: notifService.unreadCount > 0,
+                backgroundColor: const Color(0xFFDC2626),
+                label: Text('${notifService.unreadCount}'),
+                child: const Icon(Icons.notifications_outlined),
+              ),
+              activeIcon: Badge(
+                isLabelVisible: notifService.unreadCount > 0,
+                backgroundColor: const Color(0xFFDC2626),
+                label: Text('${notifService.unreadCount}'),
+                child: const Icon(Icons.notifications),
+              ),
+              label: 'Alerts',
+            ),
+          ],
+        ),
       ),
     );
   }

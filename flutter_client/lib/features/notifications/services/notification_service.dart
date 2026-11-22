@@ -55,6 +55,32 @@ class NotificationService extends ChangeNotifier {
     }
   }
 
+  void markAllAsRead() {
+    _notifications = _notifications.map((n) {
+      return AppNotification(
+        id: n.id,
+        userId: n.userId,
+        title: n.title,
+        body: n.body,
+        type: n.type,
+        metadata: n.metadata,
+        isRead: true,
+        createdAt: n.createdAt,
+      );
+    }).toList();
+    notifyListeners();
+  }
+
+  void removeNotification(String id) {
+    _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
+
+  void clearAll() {
+    _notifications.clear();
+    notifyListeners();
+  }
+
   // Zomato/Swiggy-style catchy reorder reminder simulator
   void simulateZomatoNudge() {
     final nudges = [
