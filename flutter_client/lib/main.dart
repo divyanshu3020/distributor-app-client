@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/config/env.dart';
+import 'core/services/license_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/license_gate_screen.dart';
 import 'features/analytics/services/analytics_service.dart';
 import 'features/announcements/services/announcement_service.dart';
 import 'features/auth_rbac/screens/role_router_screen.dart';
@@ -32,6 +34,7 @@ class BhagwatiDistributorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => LicenseService()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => InventoryService()),
         ChangeNotifierProvider(create: (_) => CartService()),
@@ -45,7 +48,7 @@ class BhagwatiDistributorApp extends StatelessWidget {
         title: 'Bhagwati Plastics B2B',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const RoleRouterScreen(),
+        home: const LicenseGateScreen(child: RoleRouterScreen()),
       ),
     );
   }

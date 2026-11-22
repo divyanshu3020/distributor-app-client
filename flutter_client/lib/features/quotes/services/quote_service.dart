@@ -87,6 +87,27 @@ class QuoteService extends ChangeNotifier {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // DEMO WATERMARK BANNER
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                margin: const pw.EdgeInsets.only(bottom: 12),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.amber100,
+                  border: pw.Border.all(color: PdfColors.amber600),
+                ),
+                child: pw.Center(
+                  child: pw.Text(
+                    '*** DEMO EVALUATION PREVIEW — NOT FOR COMMERCIAL OR TAX INVOICE USE ***',
+                    style: pw.TextStyle(
+                      color: PdfColors.amber900,
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 8,
+                    ),
+                  ),
+                ),
+              ),
+
               // Header
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,

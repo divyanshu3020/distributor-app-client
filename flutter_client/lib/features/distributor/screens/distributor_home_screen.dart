@@ -63,7 +63,31 @@ class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+            color: const Color(0xFFFEF3C7),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.shield_outlined, size: 13, color: Color(0xFFB45309)),
+                SizedBox(width: 6),
+                Text(
+                  'Demo Evaluation Build — Trial access valid until Nov 30, 2026',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: _screens[_currentIndex]),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
