@@ -154,8 +154,22 @@ class QuoteDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.local_shipping, size: 16, color: AppTheme.primaryBlue),
-                      const SizedBox(width: 6),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Image.asset(
+                          QuoteService.getVehicleAsset(vehicleTier),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.local_shipping, size: 20, color: AppTheme.primaryBlue),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Text(
                         vehicleTier,
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),

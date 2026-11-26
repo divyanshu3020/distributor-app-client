@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../features/quotes/services/quote_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/currency_formatter.dart';
 import 'approximate_badge.dart';
@@ -48,15 +49,32 @@ class VehicleTierCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 58,
+                height: 58,
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  _getVehicleIcon(tierName),
                   color: Colors.white,
-                  size: 22,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    QuoteService.getVehicleAsset(tierName),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      _getVehicleIcon(tierName),
+                      color: AppTheme.primaryDark,
+                      size: 26,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
