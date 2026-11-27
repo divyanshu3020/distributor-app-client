@@ -23,7 +23,7 @@ class DistributorProfileScreen extends StatelessWidget {
     final businessName = profile?.businessName ?? 'Bhagwati Plastics & Polymers';
     final partnerName = profile?.fullName ?? 'Authorized Distributor Partner';
     final email = profile?.email ?? 'distributor@bhagwatiplastics.com';
-    final phone = profile?.phoneNumber ?? '+91 98200 12345';
+    final phone = profile?.phone ?? '+91 98200 12345';
     final gstin = profile?.gstNumber ?? '27AABCU9603R1ZM';
     final address = profile?.address ?? 'Plot No. 42, GIDC Industrial Estate, Umbergaon, Gujarat - 396171';
 
@@ -334,7 +334,7 @@ class DistributorProfileScreen extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textMain),
                 ),
               ],
             ),

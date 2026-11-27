@@ -100,7 +100,7 @@ class _OrdersQuotesScreenState extends State<OrdersQuotesScreen> with SingleTick
             const SizedBox(height: 12),
             const Text(
               'No Orders Placed Yet',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textDark),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textMain),
             ),
             const SizedBox(height: 6),
             const Text(
@@ -213,7 +213,7 @@ class _OrdersQuotesScreenState extends State<OrdersQuotesScreen> with SingleTick
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.textDark,
+                                color: AppTheme.textMain,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -388,7 +388,7 @@ class _OrdersQuotesScreenState extends State<OrdersQuotesScreen> with SingleTick
             const SizedBox(height: 12),
             const Text(
               'No Quotations Available',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textDark),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textMain),
             ),
             const SizedBox(height: 6),
             const Text(
@@ -574,7 +574,7 @@ class _OrdersQuotesScreenState extends State<OrdersQuotesScreen> with SingleTick
       children: [
         Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.textMuted)),
         const SizedBox(height: 1),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textMain)),
       ],
     );
   }
