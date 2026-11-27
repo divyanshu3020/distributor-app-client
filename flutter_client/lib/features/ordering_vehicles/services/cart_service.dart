@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/pricing_calculator.dart';
 import '../../inventory/models/product.dart';
 import '../models/cart_item.dart';
 
@@ -123,7 +124,12 @@ class CartService extends ChangeNotifier {
 
   double get approxDeliveryFare => predictedVehicle.baseFare;
 
-  double get grandTotalApprox => subtotalApprox + approxDeliveryFare;
+  PricingBreakdown get pricing => PricingCalculator.compute(
+        subtotal: subtotalApprox,
+        vehicleFare: approxDeliveryFare,
+      );
+
+  double get grandTotalApprox => pricing.grandTotal;
 
   void addItem(Product product, int packages) {
     if (_items.containsKey(product.id)) {
@@ -184,24 +190,37 @@ class CartService extends ChangeNotifier {
     _orderError = null;
     notifyListeners();
 
+    final vehicle = predictedVehicle;
+    final now = DateTime.now();
+    final orderNumber = 'PO-${now.year}${now.month.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch.toString().substring(8)}';
+    final quoteNumber = 'QT-${now.year}${now.month.toString().padLeft(2, '0')}-${orderNumber.replaceAll(RegExp(r'\D'), '').padLeft(4, '0')}';
+
+    // 1. Snapshot calculations BEFORE cart is cleared!
+    final pricingSnapshot = pricing;
+    final packagesSnapshot = totalPackages;
+    final unitsSnapshot = totalUnits;
+    final vehicleTierNameSnapshot = vehicle.tierName;
+    final vehicleTierIdSnapshot = vehicle.tierId;
+    final hasMadeToOrderSnapshot = hasMadeToOrder;
+    final estimatedDispatchSnapshot = estimatedDispatchDate;
+    final cartItemsSnapshot = List<CartItem>.from(_items.values);
+
     try {
       final sb = SupabaseService.instance;
-      final vehicle = predictedVehicle;
-      final now = DateTime.now();
-      final orderNumber = 'PO-${now.year}${now.month.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch.toString().substring(8)}';
 
       final orderPayload = {
         'order_number': orderNumber,
         'distributor_id': distributorId,
         'status': 'confirmed',
-        'subtotal_approx': subtotalApprox,
-        'vehicle_tier_id': vehicle.tierId,
-        'vehicle_fare_approx': approxDeliveryFare,
-        'total_approx': grandTotalApprox,
-        'total_packages': totalPackages,
-        'total_units': totalUnits,
-        'has_made_to_order': hasMadeToOrder,
-        'estimated_dispatch_date': estimatedDispatchDate.toIso8601String(),
+        'subtotal_approx': pricingSnapshot.subtotal,
+        'vehicle_tier_id': vehicleTierIdSnapshot,
+        'vehicle_fare_approx': pricingSnapshot.vehicleFare,
+        'tax_amount': pricingSnapshot.taxAmount,
+        'total_approx': pricingSnapshot.grandTotal,
+        'total_packages': packagesSnapshot,
+        'total_units': unitsSnapshot,
+        'has_made_to_order': hasMadeToOrderSnapshot,
+        'estimated_dispatch_date': estimatedDispatchSnapshot.toIso8601String(),
         'dispatch_notes': deliveryNotes,
       };
 
@@ -213,7 +232,7 @@ class CartService extends ChangeNotifier {
           orderId = orderRes['id'];
 
           // Insert items
-          final itemsToInsert = _items.values.map((item) {
+          final itemsToInsert = cartItemsSnapshot.map((item) {
             return {
               'order_id': orderId,
               'product_id': item.product.id,
@@ -231,49 +250,61 @@ class CartService extends ChangeNotifier {
           await sb.orderItems.insert(itemsToInsert);
 
           // Direct insert quotation record into database
-          final subtotal = subtotalApprox;
-          final fare = approxDeliveryFare;
-          final tax = (subtotal + fare) * 0.18;
-          final grand = subtotal + fare + tax;
-          final quoteNum = 'QT-${now.year}${now.month.toString().padLeft(2, '0')}-${orderNumber.replaceAll(RegExp(r'\D'), '').padLeft(4, '0')}';
-
           await sb.quotations.insert({
-            'quote_number': quoteNum,
+            'quote_number': quoteNumber,
             'order_id': orderId,
             'distributor_id': distributorId,
-            'final_subtotal': subtotal,
-            'vehicle_fare': fare,
-            'tax_amount': tax,
-            'grand_total': grand,
+            'final_subtotal': pricingSnapshot.subtotal,
+            'vehicle_fare': pricingSnapshot.vehicleFare,
+            'tax_amount': pricingSnapshot.taxAmount,
+            'grand_total': pricingSnapshot.grandTotal,
             'status': 'locked',
           });
         } catch (dbErr) {
           debugPrint('Supabase order insert note (falling back to offline quotation): $dbErr');
-          // If remote insert fails (e.g. foreign key constraint on demo ID), we gracefully continue
-          // so the user receives their locked quotation and PDF invoice immediately without getting stuck!
         }
       }
 
-      // Order placed successfully, clear cart
-      clearCart();
-
-      return {
+      final resultMap = {
         'orderId': orderId,
         'orderNumber': orderNumber,
-        'total': grandTotalApprox,
-        'vehicleTier': vehicle.tierName,
-        'estimatedDispatch': estimatedDispatchDate,
+        'quoteNumber': quoteNumber,
+        'subtotal': pricingSnapshot.subtotal,
+        'vehicleFare': pricingSnapshot.vehicleFare,
+        'taxAmount': pricingSnapshot.taxAmount,
+        'grandTotal': pricingSnapshot.grandTotal,
+        'total': pricingSnapshot.grandTotal,
+        'vehicleTier': vehicleTierNameSnapshot,
+        'totalPackages': packagesSnapshot,
+        'totalUnits': unitsSnapshot,
+        'estimatedDispatch': estimatedDispatchSnapshot,
       };
+
+      // Now safe to clear cart
+      clearCart();
+
+      return resultMap;
     } catch (e) {
       _orderError = e.toString();
       debugPrint('Order placement error: $e');
-      return {
-        'orderId': 'PO-${DateTime.now().millisecondsSinceEpoch}',
-        'orderNumber': 'PO-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}-001',
-        'total': grandTotalApprox,
-        'vehicleTier': predictedVehicle.tierName,
-        'estimatedDispatch': estimatedDispatchDate,
+
+      final fallbackMap = {
+        'orderId': 'PO-${now.millisecondsSinceEpoch}',
+        'orderNumber': orderNumber,
+        'quoteNumber': quoteNumber,
+        'subtotal': pricingSnapshot.subtotal,
+        'vehicleFare': pricingSnapshot.vehicleFare,
+        'taxAmount': pricingSnapshot.taxAmount,
+        'grandTotal': pricingSnapshot.grandTotal,
+        'total': pricingSnapshot.grandTotal,
+        'vehicleTier': vehicleTierNameSnapshot,
+        'totalPackages': packagesSnapshot,
+        'totalUnits': unitsSnapshot,
+        'estimatedDispatch': estimatedDispatchSnapshot,
       };
+
+      clearCart();
+      return fallbackMap;
     } finally {
       _isPlacingOrder = false;
       notifyListeners();

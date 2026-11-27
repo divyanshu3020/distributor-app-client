@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/approximate_badge.dart';
+import '../../../core/widgets/top_toast.dart';
 import '../../ordering_vehicles/screens/cart_screen.dart';
 import '../../ordering_vehicles/services/cart_service.dart';
 import '../models/product.dart';
@@ -73,20 +74,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   void _showNotificationSnackBar(BuildContext context, String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        backgroundColor: isError ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 1600),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    );
+    TopToast.show(context, message: message, isError: isError);
   }
 
   @override
@@ -531,9 +519,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return StatefulBuilder(
-          builder: (modalContext, setModalState) {
-            final currentQty = cartService.items[product.id]?.packages ?? 0;
+        return Consumer<CartService>(
+          builder: (modalContext, liveCartService, child) {
+            final currentQty = liveCartService.items[product.id]?.packages ?? 0;
             final catColor = _getCategoryColor(product.category);
 
             return Container(
@@ -738,7 +726,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                         _buildAddButton(
                           context,
                           product,
-                          cartService,
+                          liveCartService,
                           currentQty,
                           isLarge: true,
                         ),

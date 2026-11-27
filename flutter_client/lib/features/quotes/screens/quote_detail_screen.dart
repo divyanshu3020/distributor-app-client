@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/pricing_calculator.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../auth_rbac/services/auth_service.dart';
 import '../../dispatch_otp/screens/delivery_handshake_screen.dart';
@@ -12,6 +13,11 @@ class QuoteDetailScreen extends StatelessWidget {
   final String orderNumber;
   final double grandTotal;
   final String vehicleTier;
+  final double? subtotal;
+  final double? vehicleFare;
+  final double? taxAmount;
+  final String? quoteNumber;
+  final int? totalPackages;
 
   const QuoteDetailScreen({
     super.key,
@@ -19,6 +25,11 @@ class QuoteDetailScreen extends StatelessWidget {
     required this.orderNumber,
     required this.grandTotal,
     required this.vehicleTier,
+    this.subtotal,
+    this.vehicleFare,
+    this.taxAmount,
+    this.quoteNumber,
+    this.totalPackages,
   });
 
   @override
@@ -27,11 +38,21 @@ class QuoteDetailScreen extends StatelessWidget {
     final authService = context.watch<AuthService>();
     final profile = authService.currentProfile;
 
-    // Derived values
-    final subtotal = grandTotal / 1.18 * 0.94; // approximate breakdown for locked view
-    final vehicleFare = grandTotal / 1.18 * 0.06;
-    final taxAmount = grandTotal - (subtotal + vehicleFare);
-    final quoteNumber = 'QT-202611-${orderNumber.replaceAll(RegExp(r'\D'), '').padLeft(4, '0')}';
+    // Direct accurate financial values or centralized PricingCalculator
+    final pricing = (subtotal != null && vehicleFare != null && taxAmount != null)
+        ? PricingBreakdown(
+            subtotal: subtotal!,
+            vehicleFare: vehicleFare!,
+            taxAmount: taxAmount!,
+            grandTotal: grandTotal,
+          )
+        : PricingCalculator.compute(
+            subtotal: grandTotal / (1 + PricingCalculator.gstRate) * 0.94,
+            vehicleFare: grandTotal / (1 + PricingCalculator.gstRate) * 0.06,
+          );
+
+    final finalQuoteNumber = quoteNumber ??
+        'QT-202611-${orderNumber.replaceAll(RegExp(r'\D'), '').padLeft(4, '0')}';
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
@@ -110,7 +131,7 @@ class QuoteDetailScreen extends StatelessWidget {
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.textMuted),
                           ),
                           Text(
-                            quoteNumber,
+                            finalQuoteNumber,
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primaryDark),
                           ),
                         ],
@@ -185,7 +206,7 @@ class QuoteDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Goods Subtotal:', style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-                      Text(CurrencyFormatter.format(subtotal), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(CurrencyFormatter.format(pricing.subtotal), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -193,7 +214,7 @@ class QuoteDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Freight Base Allocation:', style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-                      Text(CurrencyFormatter.format(vehicleFare), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(CurrencyFormatter.format(pricing.vehicleFare), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -201,7 +222,7 @@ class QuoteDetailScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('GST (18%):', style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-                      Text(CurrencyFormatter.format(taxAmount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text(CurrencyFormatter.format(pricing.taxAmount), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -216,7 +237,7 @@ class QuoteDetailScreen extends StatelessWidget {
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primaryDark),
                       ),
                       Text(
-                        CurrencyFormatter.format(grandTotal),
+                        CurrencyFormatter.format(pricing.grandTotal),
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryBlue),
                       ),
                     ],
@@ -232,16 +253,17 @@ class QuoteDetailScreen extends StatelessWidget {
               icon: Icons.picture_as_pdf,
               onPressed: () {
                 quoteService.generateAndPrintPdf(
-                  quoteNumber: quoteNumber,
+                  quoteNumber: finalQuoteNumber,
                   orderNumber: orderNumber,
                   distributorName: profile?.businessName ?? profile?.fullName ?? 'Distributor',
                   distributorGst: profile?.gstNumber,
                   distributorAddress: profile?.address,
                   vehicleTier: vehicleTier,
-                  subtotal: subtotal,
-                  vehicleFare: vehicleFare,
-                  taxAmount: taxAmount,
-                  grandTotal: grandTotal,
+                  subtotal: pricing.subtotal,
+                  vehicleFare: pricing.vehicleFare,
+                  taxAmount: pricing.taxAmount,
+                  grandTotal: pricing.grandTotal,
+                  totalPackages: totalPackages,
                 );
               },
             ),

@@ -5,19 +5,109 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../ordering_vehicles/models/app_order.dart';
 import '../models/quotation.dart';
 
 class QuoteService extends ChangeNotifier {
   List<Quotation> _quotes = [];
+  List<AppOrder> _orders = [];
   bool _isLoading = false;
 
   List<Quotation> get quotes => _quotes;
+  List<AppOrder> get orders => _orders;
   bool get isLoading => _isLoading;
 
-  Future<void> loadDistributorQuotes(String distributorId) async {
+  void addLocalOrder(AppOrder order) {
+    _orders.insert(0, order);
+    notifyListeners();
+  }
+
+  void addLocalQuote(Quotation quote) {
+    _quotes.insert(0, quote);
+    notifyListeners();
+  }
+
+  Future<void> loadAll(String distributorId) async {
     _isLoading = true;
     notifyListeners();
+    await Future.wait([
+      loadDistributorQuotes(distributorId, notify: false),
+      loadDistributorOrders(distributorId, notify: false),
+    ]);
+    _isLoading = false;
+    notifyListeners();
+  }
 
+  Future<void> loadDistributorOrders(String distributorId, {bool notify = true}) async {
+    try {
+      final sb = SupabaseService.instance;
+      if (sb.isInitialized) {
+        final data = await sb.orders
+            .select()
+            .eq('distributor_id', distributorId)
+            .order('created_at', ascending: false);
+        final fetched = (data as List).map((i) => AppOrder.fromJson(i)).toList();
+        if (fetched.isNotEmpty) {
+          _orders = fetched;
+        } else if (_orders.isEmpty) {
+          _initDefaultOrders(distributorId);
+        }
+      } else if (_orders.isEmpty) {
+        _initDefaultOrders(distributorId);
+      }
+    } catch (e) {
+      debugPrint('Error loading orders: $e');
+      if (_orders.isEmpty) {
+        _initDefaultOrders(distributorId);
+      }
+    } finally {
+      if (notify) notifyListeners();
+    }
+  }
+
+  void _initDefaultOrders(String distributorId) {
+    _orders = [
+      AppOrder(
+        id: 'mock-o-3',
+        orderNumber: 'PO-202611-003',
+        distributorId: distributorId,
+        status: 'dispatched',
+        subtotal: 34500.0,
+        vehicleTierId: 'mini_truck',
+        vehicleTierName: 'Mahindra Bolero Maxi / Pickup',
+        vehicleFare: 1600.0,
+        taxAmount: 6498.0,
+        grandTotal: 42598.0,
+        totalPackages: 85,
+        totalUnits: 1500,
+        hasMadeToOrder: false,
+        estimatedDispatchDate: DateTime.now(),
+        driverName: 'Ramesh Kumar',
+        driverPhone: '+91 98765 12345',
+        vehicleNumber: 'MH 04 AB 8844',
+        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      ),
+      AppOrder(
+        id: 'mock-o-1',
+        orderNumber: 'PO-202611-001',
+        distributorId: distributorId,
+        status: 'confirmed',
+        subtotal: 48500.0,
+        vehicleTierId: 'truck',
+        vehicleTierName: '14-17ft Full Body Truck',
+        vehicleFare: 3200.0,
+        taxAmount: 9306.0,
+        grandTotal: 61006.0,
+        totalPackages: 140,
+        totalUnits: 2400,
+        hasMadeToOrder: true,
+        estimatedDispatchDate: DateTime.now().add(const Duration(days: 2)),
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
+  }
+
+  Future<void> loadDistributorQuotes(String distributorId, {bool notify = true}) async {
     try {
       final sb = SupabaseService.instance;
       if (sb.isInitialized) {
@@ -25,29 +115,40 @@ class QuoteService extends ChangeNotifier {
             .select()
             .eq('distributor_id', distributorId)
             .order('created_at', ascending: false);
-        _quotes = (data as List).map((i) => Quotation.fromJson(i)).toList();
-      } else {
-        _quotes = [
-          Quotation(
-            id: 'mock-q-1',
-            quoteNumber: 'QT-202611-1042',
-            orderId: 'PO-202611-001',
-            distributorId: distributorId,
-            finalSubtotal: 48500.0,
-            vehicleFare: 3200.0,
-            taxAmount: 9306.0,
-            grandTotal: 61006.0,
-            status: 'locked',
-            createdAt: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-        ];
+        final fetched = (data as List).map((i) => Quotation.fromJson(i)).toList();
+        if (fetched.isNotEmpty) {
+          _quotes = fetched;
+        } else if (_quotes.isEmpty) {
+          _initDefaultQuotes(distributorId);
+        }
+      } else if (_quotes.isEmpty) {
+        _initDefaultQuotes(distributorId);
       }
     } catch (e) {
       debugPrint('Error loading quotations: $e');
+      if (_quotes.isEmpty) {
+        _initDefaultQuotes(distributorId);
+      }
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (notify) notifyListeners();
     }
+  }
+
+  void _initDefaultQuotes(String distributorId) {
+    _quotes = [
+      Quotation(
+        id: 'mock-q-1',
+        quoteNumber: 'QT-202611-1042',
+        orderId: 'PO-202611-001',
+        distributorId: distributorId,
+        finalSubtotal: 48500.0,
+        vehicleFare: 3200.0,
+        taxAmount: 9306.0,
+        grandTotal: 61006.0,
+        status: 'locked',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
   }
 
   Future<Quotation?> getQuoteForOrder(String orderId) async {

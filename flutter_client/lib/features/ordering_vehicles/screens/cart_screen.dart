@@ -7,7 +7,10 @@ import '../../../core/widgets/approximate_badge.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/vehicle_tier_card.dart';
 import '../../auth_rbac/services/auth_service.dart';
+import '../../quotes/models/quotation.dart';
 import '../../quotes/screens/quote_detail_screen.dart';
+import '../../quotes/services/quote_service.dart';
+import '../models/app_order.dart';
 import '../services/cart_service.dart';
 
 class CartScreen extends StatelessWidget {
@@ -333,7 +336,7 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        CurrencyFormatter.formatApprox(cartService.subtotalApprox),
+                        CurrencyFormatter.formatApprox(cartService.pricing.subtotal),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -351,8 +354,26 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        CurrencyFormatter.formatApprox(cartService.approxDeliveryFare),
+                        CurrencyFormatter.formatApprox(cartService.pricing.vehicleFare),
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Estimated GST (18%):',
+                          style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        CurrencyFormatter.formatApprox(cartService.pricing.taxAmount),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -376,7 +397,7 @@ class CartScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        CurrencyFormatter.formatApprox(cartService.grandTotalApprox),
+                        CurrencyFormatter.formatApprox(cartService.pricing.grandTotal),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -423,13 +444,51 @@ class CartScreen extends StatelessWidget {
                       );
 
                       if (result != null && context.mounted) {
-                        Navigator.of(context).pushReplacement(
+                        final quoteService = context.read<QuoteService>();
+                        final newOrder = AppOrder(
+                          id: result['orderId'],
+                          orderNumber: result['orderNumber'],
+                          distributorId: distributorId,
+                          status: 'confirmed',
+                          subtotal: (result['subtotal'] as num).toDouble(),
+                          vehicleTierId: cartService.predictedVehicle.tierId,
+                          vehicleTierName: result['vehicleTier'] as String,
+                          vehicleFare: (result['vehicleFare'] as num).toDouble(),
+                          taxAmount: (result['taxAmount'] as num).toDouble(),
+                          grandTotal: (result['grandTotal'] as num).toDouble(),
+                          totalPackages: result['totalPackages'] as int,
+                          totalUnits: result['totalUnits'] as int,
+                          hasMadeToOrder: false,
+                          estimatedDispatchDate: result['estimatedDispatch'] as DateTime,
+                          createdAt: DateTime.now(),
+                        );
+                        final newQuote = Quotation(
+                          id: 'q-${result['orderId']}',
+                          quoteNumber: result['quoteNumber'] as String,
+                          orderId: result['orderNumber'] as String,
+                          distributorId: distributorId,
+                          finalSubtotal: (result['subtotal'] as num).toDouble(),
+                          vehicleFare: (result['vehicleFare'] as num).toDouble(),
+                          taxAmount: (result['taxAmount'] as num).toDouble(),
+                          grandTotal: (result['grandTotal'] as num).toDouble(),
+                          status: 'locked',
+                          createdAt: DateTime.now(),
+                        );
+                        quoteService.addLocalOrder(newOrder);
+                        quoteService.addLocalQuote(newQuote);
+
+                        Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => QuoteDetailScreen(
                               orderId: result['orderId'],
                               orderNumber: result['orderNumber'],
-                              grandTotal: result['total'],
-                              vehicleTier: result['vehicleTier'],
+                              quoteNumber: result['quoteNumber'],
+                              grandTotal: (result['grandTotal'] as num).toDouble(),
+                              subtotal: (result['subtotal'] as num).toDouble(),
+                              vehicleFare: (result['vehicleFare'] as num).toDouble(),
+                              taxAmount: (result['taxAmount'] as num).toDouble(),
+                              vehicleTier: result['vehicleTier'] as String,
+                              totalPackages: result['totalPackages'] as int,
                             ),
                           ),
                         );

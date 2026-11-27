@@ -4,11 +4,14 @@ import '../../../core/theme/app_theme.dart';
 import '../../announcements/screens/announcements_feed_screen.dart';
 import '../../auth_rbac/services/auth_service.dart';
 import '../../inventory/screens/catalog_screen.dart';
+import '../../inventory/services/inventory_service.dart';
 import '../../notifications/screens/notification_center_screen.dart';
 import '../../notifications/services/notification_service.dart';
 import '../../ordering_vehicles/screens/cart_screen.dart';
 import '../../ordering_vehicles/services/cart_service.dart';
-import '../../quotes/screens/quotes_list_screen.dart';
+import '../../quotes/screens/orders_quotes_screen.dart';
+import '../../quotes/services/quote_service.dart';
+import 'distributor_profile_screen.dart';
 
 class DistributorHomeScreen extends StatefulWidget {
   const DistributorHomeScreen({super.key});
@@ -20,20 +23,24 @@ class DistributorHomeScreen extends StatefulWidget {
 class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    CatalogScreen(),
-    CartScreen(),
-    QuotesListScreen(),
-    AnnouncementsFeedScreen(),
-    NotificationCenterScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final cartService = context.watch<CartService>();
     final notifService = context.watch<NotificationService>();
     final authService = context.watch<AuthService>();
+    final inventoryService = context.read<InventoryService>();
+    final quoteService = context.read<QuoteService>();
     final profile = authService.currentProfile;
+
+    final screens = [
+      const CatalogScreen(),
+      const CartScreen(),
+      const OrdersQuotesScreen(),
+      const AnnouncementsFeedScreen(),
+      DistributorProfileScreen(
+        onNavigateTab: (index) => setState(() => _currentIndex = index),
+      ),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -51,15 +58,38 @@ class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
           ],
         ),
         actions: [
+          // 1. Refresh Button
+          IconButton(
+            tooltip: 'Refresh Data',
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              inventoryService.loadProducts();
+              if (profile?.id != null) {
+                quoteService.loadAll(profile!.id);
+                notifService.loadNotifications(profile.id);
+              }
+            },
+          ),
+          // 2. Alerts with Unread Badge moved to top bar
+          IconButton(
+            tooltip: 'Alerts & Notifications',
+            icon: Badge(
+              isLabelVisible: notifService.unreadCount > 0,
+              backgroundColor: const Color(0xFFDC2626),
+              label: Text('${notifService.unreadCount}'),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationCenterScreen()),
+              );
+            },
+          ),
+          // 3. Switch Preview Role
           IconButton(
             tooltip: 'Switch Preview Role',
             icon: const Icon(Icons.swap_horiz),
             onPressed: () => _showRoleSwitchSheet(context),
-          ),
-          IconButton(
-            tooltip: 'Sign Out',
-            icon: const Icon(Icons.logout),
-            onPressed: () => authService.signOut(),
           ),
         ],
       ),
@@ -85,7 +115,7 @@ class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
               ],
             ),
           ),
-          Expanded(child: _screens[_currentIndex]),
+          Expanded(child: screens[_currentIndex]),
         ],
       ),
       bottomNavigationBar: Container(
@@ -125,29 +155,19 @@ class _DistributorHomeScreenState extends State<DistributorHomeScreen> {
               label: 'Cart',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Quotes',
+              icon: Icon(Icons.local_shipping_outlined),
+              activeIcon: Icon(Icons.local_shipping),
+              label: 'Orders',
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.campaign_outlined),
               activeIcon: Icon(Icons.campaign),
               label: 'Updates',
             ),
-            BottomNavigationBarItem(
-              icon: Badge(
-                isLabelVisible: notifService.unreadCount > 0,
-                backgroundColor: const Color(0xFFDC2626),
-                label: Text('${notifService.unreadCount}'),
-                child: const Icon(Icons.notifications_outlined),
-              ),
-              activeIcon: Badge(
-                isLabelVisible: notifService.unreadCount > 0,
-                backgroundColor: const Color(0xFFDC2626),
-                label: Text('${notifService.unreadCount}'),
-                child: const Icon(Icons.notifications),
-              ),
-              label: 'Alerts',
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
             ),
           ],
         ),
